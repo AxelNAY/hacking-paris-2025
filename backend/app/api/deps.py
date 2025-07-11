@@ -20,7 +20,11 @@ def get_current_user(
                 detail="Invalid token"
             )
         
-        user = db.query(User).filter(User.id == user_id).first()
+        user = db.query(User).filter(
+            User.id == user_id,
+            User.deleted_at.is_(None)
+        ).first()
+        
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
