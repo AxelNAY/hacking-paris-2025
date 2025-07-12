@@ -16,8 +16,8 @@ async def vote_for_content(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Voter pour un contenu avec des $FAN tokens"""
-    # Vérifier que le contenu existe
+    """Vote for content with $FAN tokens"""
+    # Check if content exists
     content = db.query(Content).filter(
         Content.id == vote_data.content_id,
         Content.deleted_at.is_(None)
@@ -26,25 +26,25 @@ async def vote_for_content(
     if not content:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Contenu non trouvé"
+            detail="Content not found"
         )
     
-    # Vérifier qu'on ne vote pas pour son propre contenu
+    # Check that we're not voting for our own content
     if content.user_id == current_user.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Vous ne pouvez pas voter pour votre propre contenu"
+            detail="You cannot vote for your own content"
         )
     
     try:
-        # Exécuter la transaction blockchain
+        # Execute blockchain transaction
         tx_hash = await execute_vote_transaction(
             voter_address=current_user.wallet_address,
             content_id=vote_data.content_id,
             amount=vote_data.amount
         )
         
-        # Enregistrer le vote
+        # Record the vote
         vote = Vote(
             voter_id=current_user.id,
             content_id=vote_data.content_id,
@@ -53,7 +53,7 @@ async def vote_for_content(
         )
         db.add(vote)
         
-        # Mettre à jour le compteur de votes du contenu
+        # Update content vote counter
         content.votes += 1
         
         db.commit()
@@ -65,7 +65,7 @@ async def vote_for_content(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erreur lors du vote: {str(e)}"
+            detail=f"Error during vote: {str(e)}"
         )
 
 @router.get("/content/{content_id}", response_model=List[VoteWithDetails])
@@ -75,7 +75,7 @@ async def get_content_votes(
     limit: int = 20,
     db: Session = Depends(get_db)
 ):
-    """Récupérer les votes d'un contenu"""
+    """Get content votes"""
     votes = db.query(Vote).filter(
         Vote.content_id == content_id
     ).offset(skip).limit(limit).all()
@@ -89,7 +89,7 @@ async def get_user_votes(
     limit: int = 20,
     db: Session = Depends(get_db)
 ):
-    """Récupérer les votes d'un utilisateur"""
+    """Get user votes"""
     votes = db.query(Vote).filter(
         Vote.voter_id == user_id
     ).offset(skip).limit(limit).all()

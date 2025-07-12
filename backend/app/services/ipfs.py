@@ -9,25 +9,25 @@ from app.core.config import settings
 class IPFSService:
     def __init__(self):
         try:
-            # Essayer de se connecter avec l'URL des settings
+            # Try to connect with the settings URL
             self.client = ipfshttpclient.connect(settings.IPFS_API_URL)
         except Exception as e:
-            print(f"Erreur connexion IPFS avec {settings.IPFS_API_URL}: {e}")
+            print(f"IPFS connection error with {settings.IPFS_API_URL}: {e}")
             try:
-                # Fallback vers la connexion par défaut
+                # Fallback to default connection
                 self.client = ipfshttpclient.connect('/ip4/127.0.0.1/tcp/5001/http')
-                print("Connexion IPFS réussie avec l'adresse par défaut")
+                print("Successful IPFS connection with default address")
             except Exception as e2:
-                print(f"Erreur connexion IPFS par défaut: {e2}")
-                # Fallback vers connexion sans paramètres
+                print(f"Default IPFS connection error: {e2}")
+                # Fallback to connection without parameters
                 self.client = ipfshttpclient.connect()
-                print("Connexion IPFS réussie sans paramètres")
+                print("Successful IPFS connection without parameters")
     
     async def upload_to_ipfs(self, content: Union[str, bytes], content_type: str = "text") -> str:
-        """Upload du contenu sur IPFS et retourne l'URL"""
+        """Upload content to IPFS and return the URL"""
         try:
             if content_type == "text":
-                # Pour le texte, on crée un fichier JSON
+                # For text, create a JSON file
                 content_data = {
                     "content": content,
                     "type": "text",
@@ -42,7 +42,7 @@ class IPFSService:
                 os.unlink(temp_file)
                 
             elif content_type == "image":
-                # Pour les images, on télécharge d'abord depuis l'URL
+                # For images, first download from the URL
                 import requests
                 response = requests.get(content)
                 
@@ -54,8 +54,8 @@ class IPFSService:
                 os.unlink(temp_file)
                 
             elif content_type == "audio":
-                # Pour l'audio, traitement similaire aux images
-                # À adapter selon votre format audio
+                # For audio, similar processing to images
+                # Adapt according to your audio format
                 content_data = {
                     "content": content,
                     "type": "audio",
@@ -69,23 +69,23 @@ class IPFSService:
                 result = self.client.add(temp_file)
                 os.unlink(temp_file)
             
-            # Retourner l'URL IPFS
+            # Return the IPFS URL
             ipfs_hash = result['Hash']
             return f"{settings.IPFS_GATEWAY_URL}/ipfs/{ipfs_hash}"
             
         except Exception as e:
-            raise Exception(f"Erreur upload IPFS: {str(e)}")
+            raise Exception(f"IPFS upload error: {str(e)}")
     
     async def get_from_ipfs(self, ipfs_hash: str) -> bytes:
-        """Récupérer du contenu depuis IPFS"""
+        """Retrieve content from IPFS"""
         try:
             return self.client.cat(ipfs_hash)
         except Exception as e:
-            raise Exception(f"Erreur récupération IPFS: {str(e)}")
+            raise Exception(f"IPFS retrieval error: {str(e)}")
 
-# Instance globale
+# Global instance
 ipfs_service = IPFSService()
 
 async def upload_to_ipfs(content: Union[str, bytes], content_type: str = "text") -> str:
-    """Fonction helper pour l'upload IPFS"""
+    """Helper function for IPFS upload"""
     return await ipfs_service.upload_to_ipfs(content, content_type)

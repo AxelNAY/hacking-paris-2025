@@ -71,7 +71,7 @@ class ContentWithUser(ContentResponse):
 
 class VoteBase(BaseModel):
     content_id: int
-    amount: float = Field(..., gt=0, description="Montant en $FAN token")
+    amount: float = Field(..., gt=0, description="Amount in $FAN token")
 
 class VoteCreate(VoteBase):
     pass
@@ -144,4 +144,4 @@ class AIGenerationResponse(BaseModel):
     content_id: int
     ipfs_url: str
     prompt: str
-    message: str = "Contenu généré avec succès"
+    message: str = "Content generated successfully"

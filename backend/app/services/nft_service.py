@@ -9,11 +9,11 @@ from app.services.smart_contract import mint_badge_nft
 class NFTService:
     
     async def create_badge_metadata(self, user: User, badge_type: str, achievements: Dict[str, Any]) -> Dict[str, Any]:
-        """Créer les métadonnées du badge NFT"""
+        """Create badge NFT metadata"""
         metadata = {
             "name": f"Fan Platform Badge - {badge_type}",
-            "description": f"Badge {badge_type} pour {user.first_name} {user.last_name}",
-            "image": f"https://your-cdn.com/badges/{badge_type}.png",  # À adapter
+            "description": f"{badge_type} badge for {user.first_name} {user.last_name}",
+            "image": f"https://your-cdn.com/badges/{badge_type}.png",  # To adapt
             "attributes": [
                 {
                     "trait_type": "Badge Type",
@@ -42,18 +42,18 @@ class NFTService:
         return metadata
     
     async def mint_achievement_badge(self, user: User, badge_type: str, achievements: Dict[str, Any], db: Session) -> BadgeNFT:
-        """Mint un badge d'achievement pour un utilisateur"""
+        """Mint an achievement badge for a user"""
         try:
-            # Créer les métadonnées
+            # Create metadata
             metadata = await self.create_badge_metadata(user, badge_type, achievements)
             
-            # Uploader les métadonnées sur IPFS
+            # Upload metadata to IPFS
             metadata_ipfs = await upload_to_ipfs(json.dumps(metadata), "text")
             
-            # Mint le NFT sur la blockchain
+            # Mint the NFT on the blockchain
             token_id, tx_hash = await mint_badge_nft(user.wallet_address, metadata_ipfs)
             
-            # Sauvegarder en base
+            # Save to database
             badge = BadgeNFT(
                 user_id=user.id,
                 nft_token_id=token_id,
@@ -66,14 +66,14 @@ class NFTService:
             return badge
             
         except Exception as e:
-            raise Exception(f"Erreur mint badge: {str(e)}")
+            raise Exception(f"Badge mint error: {str(e)}")
     
     async def check_and_award_badges(self, user: User, db: Session):
-        """Vérifier et attribuer automatiquement les badges"""
-        # Calculer les statistiques de l'utilisateur
+        """Check and automatically award badges"""
+        # Calculate user statistics
         user_stats = await self.get_user_stats(user.id, db)
         
-        # Définir les critères des badges
+        # Define badge criteria
         badge_criteria = {
             "First Creator": user_stats["content_count"] >= 1,
             "Prolific Creator": user_stats["content_count"] >= 10,
@@ -82,10 +82,10 @@ class NFTService:
             "Generous Supporter": user_stats["tokens_spent"] >= 1000,
         }
         
-        # Vérifier et attribuer les badges
+        # Check and award badges
         for badge_type, criteria_met in badge_criteria.items():
             if criteria_met:
-                # Vérifier si l'utilisateur a déjà ce badge
+                # Check if user already has this badge
                 existing_badge = db.query(BadgeNFT).filter(
                     BadgeNFT.user_id == user.id,
                     BadgeNFT.nft_token_id.like(f"%{badge_type}%")
@@ -97,33 +97,33 @@ class NFTService:
                     )
     
     async def get_user_stats(self, user_id: int, db: Session) -> Dict[str, Any]:
-        """Calculer les statistiques d'un utilisateur"""
+        """Calculate user statistics"""
         from sqlalchemy import func
         from app.db.models import Content, Vote
         
-        # Nombre de contenus créés
+        # Number of created contents
         content_count = db.query(func.count(Content.id)).filter(
             Content.user_id == user_id,
             Content.deleted_at.is_(None)
         ).scalar() or 0
         
-        # Total des votes reçus
+        # Total votes received
         total_votes = db.query(func.sum(Content.votes)).filter(
             Content.user_id == user_id,
             Content.deleted_at.is_(None)
         ).scalar() or 0
         
-        # Nombre de votes donnés
+        # Number of votes given
         votes_given = db.query(func.count(Vote.id)).filter(
             Vote.voter_id == user_id
         ).scalar() or 0
         
-        # Tokens dépensés en votes
+        # Tokens spent on votes
         tokens_spent = db.query(func.sum(Vote.amount)).filter(
             Vote.voter_id == user_id
         ).scalar() or 0.0
         
-        # Tokens reçus
+        # Tokens received
         tokens_received = db.query(func.sum(Vote.amount)).join(
             Content, Vote.content_id == Content.id
         ).filter(
@@ -139,5 +139,5 @@ class NFTService:
             "tokens_received": tokens_received
         }
 
-# Instance globale
+# Global instance
 nft_service = NFTService()

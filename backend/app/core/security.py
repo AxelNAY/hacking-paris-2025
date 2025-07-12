@@ -37,17 +37,17 @@ def verify_token(token: str):
         )
 
 def verify_wallet_signature(message: str, signature: str, wallet_address: str) -> bool:
-    """Vérifier la signature d'un wallet Ethereum"""
+    """Verify an Ethereum wallet signature"""
     try:
-        # Encoder le message
+        # Encode the message
         message_encoded = encode_defunct(text=message)
         
-        # Récupérer l'adresse depuis la signature
+        # Recover the address from the signature
         recovered_address = Account.recover_message(message_encoded, signature=signature)
         
-        # Vérifier que l'adresse correspond
+        # Check if the address matches
         return recovered_address.lower() == wallet_address.lower()
         
     except Exception as e:
-        print(f"Erreur vérification signature: {e}")
+        print(f"Signature verification error: {e}")
         return False

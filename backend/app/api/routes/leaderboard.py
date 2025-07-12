@@ -14,10 +14,10 @@ async def get_creators_leaderboard(
     per_page: int = 20,
     db: Session = Depends(get_db)
 ):
-    """Classement des créateurs par nombre de votes et tokens reçus"""
+    """Ranking of creators by number of votes and tokens received"""
     skip = (page - 1) * per_page
     
-    # Requête pour le classement
+    # Query for ranking
     query = db.query(
         User,
         func.count(Content.id).label('content_count'),
@@ -39,7 +39,7 @@ async def get_creators_leaderboard(
     total_users = query.count()
     results = query.offset(skip).limit(per_page).all()
     
-    # Construire les entrées du classement
+    # Build leaderboard entries
     entries = []
     for idx, (user, content_count, total_votes, total_fan_tokens) in enumerate(results):
         entries.append(LeaderboardEntry(
@@ -63,7 +63,7 @@ async def get_voters_leaderboard(
     per_page: int = 20,
     db: Session = Depends(get_db)
 ):
-    """Classement des votants par tokens dépensés"""
+    """Ranking of voters by tokens spent"""
     skip = (page - 1) * per_page
     
     query = db.query(
@@ -87,7 +87,7 @@ async def get_voters_leaderboard(
             user=UserResponse.from_orm(user),
             total_votes=vote_count or 0,
             total_fan_tokens=total_spent or 0.0,
-            content_count=0,  # Pas pertinent pour les votants
+            content_count=0,  # Not relevant for voters
             rank=skip + idx + 1
         ))
     

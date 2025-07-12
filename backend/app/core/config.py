@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 
 class Settings(BaseSettings):
-    # Base de données
+    # Database
     DATABASE_URL: str
     
     # JWT
@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str
     
-    # IPFS - Format MultiAddr correct
+    # IPFS - Correct MultiAddr format
     IPFS_API_URL: str = "/ip4/127.0.0.1/tcp/5001/http"
     IPFS_GATEWAY_URL: str = "http://localhost:8080"
     

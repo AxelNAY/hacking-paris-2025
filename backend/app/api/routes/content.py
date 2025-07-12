@@ -20,19 +20,19 @@ async def generate_ai_content(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Générer du contenu avec l'IA"""
+    """Generate content with AI"""
     try:
-        # Générer le contenu avec l'IA
+        # Generate content with AI
         generated_content = await generate_content(
             prompt=request.prompt,
             content_type=request.type,
             description=request.description
         )
         
-        # Uploader sur IPFS
+        # Upload to IPFS
         ipfs_url = await upload_to_ipfs(generated_content)
         
-        # Sauvegarder en base
+        # Save to database
         content = Content(
             user_id=current_user.id,
             type=request.type,
@@ -53,7 +53,7 @@ async def generate_ai_content(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erreur lors de la génération: {str(e)}"
+            detail=f"Error during generation: {str(e)}"
         )
 
 @router.get("/all", response_model=List[ContentWithUser])
@@ -64,7 +64,7 @@ async def get_all_content(
     description: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    """Récupérer tous les contenus avec pagination et filtres"""
+    """Get all content with pagination and filters"""
     query = db.query(Content).filter(Content.deleted_at.is_(None))
     
     if content_type:
@@ -80,7 +80,7 @@ async def get_content_by_id(
     content_id: int,
     db: Session = Depends(get_db)
 ):
-    """Récupérer un contenu par son ID"""
+    """Get content by ID"""
     content = db.query(Content).filter(
         Content.id == content_id,
         Content.deleted_at.is_(None)
@@ -89,7 +89,7 @@ async def get_content_by_id(
     if not content:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Contenu non trouvé"
+            detail="Content not found"
         )
     
     return ContentWithUser.from_orm(content)
@@ -101,7 +101,7 @@ async def get_user_content(
     limit: int = 20,
     db: Session = Depends(get_db)
 ):
-    """Récupérer les contenus d'un utilisateur"""
+    """Get user's content"""
     contents = db.query(Content).filter(
         Content.user_id == user_id,
         Content.deleted_at.is_(None)
@@ -115,22 +115,22 @@ async def delete_content(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Supprimer un contenu (soft delete)"""
+    """Delete content (soft delete)"""
     content = db.query(Content).filter(Content.id == content_id).first()
     
     if not content:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Contenu non trouvé"
+            detail="Content not found"
         )
     
     if content.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Vous ne pouvez supprimer que vos propres contenus"
+            detail="You can only delete your own content"
         )
     
     content.deleted_at = datetime.utcnow()
     db.commit()
     
-    return {"message": "Contenu supprimé avec succès"}
+    return {"message": "Content successfully deleted"}

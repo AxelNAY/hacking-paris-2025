@@ -9,7 +9,7 @@ class SmartContractService:
         self.w3 = Web3(Web3.HTTPProvider(settings.WEB3_PROVIDER_URL))
         self.account = self.w3.eth.account.from_key(settings.PRIVATE_KEY)
         
-        # ABI du contrat (à adapter selon votre smart contract)
+        # Contract ABI (adapt according to your smart contract)
         self.contract_abi = [
             {
                 "inputs": [
@@ -41,12 +41,12 @@ class SmartContractService:
         )
     
     async def execute_vote_transaction(self, voter_address: str, content_id: int, amount: float) -> str:
-        """Exécuter une transaction de vote sur la blockchain"""
+        """Execute a vote transaction on the blockchain"""
         try:
-            # Convertir le montant en wei (si nécessaire)
+            # Convert amount to wei (if necessary)
             amount_wei = self.w3.to_wei(amount, 'ether')
             
-            # Construire la transaction
+            # Build the transaction
             transaction = self.contract.functions.vote(
                 content_id,
                 amount_wei,
@@ -58,27 +58,27 @@ class SmartContractService:
                 'nonce': self.w3.eth.get_transaction_count(self.account.address),
             })
             
-            # Signer la transaction
+            # Sign the transaction
             signed_txn = self.w3.eth.account.sign_transaction(transaction, settings.PRIVATE_KEY)
             
-            # Envoyer la transaction
+            # Send the transaction
             tx_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
             
-            # Attendre la confirmation
+            # Wait for confirmation
             receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
             
             return receipt.transactionHash.hex()
             
         except Exception as e:
-            raise Exception(f"Erreur transaction blockchain: {str(e)}")
+            raise Exception(f"Blockchain transaction error: {str(e)}")
     
     async def mint_badge_nft(self, user_address: str, metadata_uri: str) -> tuple[str, str]:
-        """Mint un badge NFT pour un utilisateur"""
+        """Mint a badge NFT for a user"""
         try:
-            # Générer un token ID unique
-            token_id = int(time.time() * 1000)  # Timestamp en millisecondes
+            # Generate a unique token ID
+            token_id = int(time.time() * 1000)  # Timestamp in milliseconds
             
-            # Construire la transaction de mint
+            # Build the mint transaction
             transaction = self.contract.functions.mintBadge(
                 user_address,
                 token_id,
@@ -90,7 +90,7 @@ class SmartContractService:
                 'nonce': self.w3.eth.get_transaction_count(self.account.address),
             })
             
-            # Signer et envoyer
+            # Sign and send
             signed_txn = self.w3.eth.account.sign_transaction(transaction, settings.PRIVATE_KEY)
             tx_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
             receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
@@ -98,15 +98,15 @@ class SmartContractService:
             return str(token_id), receipt.transactionHash.hex()
             
         except Exception as e:
-            raise Exception(f"Erreur mint NFT: {str(e)}")
+            raise Exception(f"NFT mint error: {str(e)}")
 
-# Instance globale
+# Global instance
 smart_contract_service = SmartContractService()
 
 async def execute_vote_transaction(voter_address: str, content_id: int, amount: float) -> str:
-    """Fonction helper pour le vote"""
+    """Helper function for voting"""
     return await smart_contract_service.execute_vote_transaction(voter_address, content_id, amount)
 
 async def mint_badge_nft(user_address: str, metadata_uri: str) -> tuple[str, str]:
-    """Fonction helper pour le mint NFT"""
+    """Helper function for NFT minting"""
     return await smart_contract_service.mint_badge_nft(user_address, metadata_uri)
