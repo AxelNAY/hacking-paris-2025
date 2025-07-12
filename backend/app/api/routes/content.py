@@ -56,7 +56,7 @@ async def generate_ai_content(
             detail=f"Erreur lors de la génération: {str(e)}"
         )
 
-@router.get("/", response_model=List[ContentWithUser])
+@router.get("/all", response_model=List[ContentWithUser])
 async def get_all_content(
     skip: int = 0,
     limit: int = 20,
