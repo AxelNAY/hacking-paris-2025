@@ -8,7 +8,20 @@ from app.core.config import settings
 
 class IPFSService:
     def __init__(self):
-        self.client = ipfshttpclient.connect(settings.IPFS_API_URL)
+        try:
+            # Essayer de se connecter avec l'URL des settings
+            self.client = ipfshttpclient.connect(settings.IPFS_API_URL)
+        except Exception as e:
+            print(f"Erreur connexion IPFS avec {settings.IPFS_API_URL}: {e}")
+            try:
+                # Fallback vers la connexion par défaut
+                self.client = ipfshttpclient.connect('/ip4/127.0.0.1/tcp/5001/http')
+                print("Connexion IPFS réussie avec l'adresse par défaut")
+            except Exception as e2:
+                print(f"Erreur connexion IPFS par défaut: {e2}")
+                # Fallback vers connexion sans paramètres
+                self.client = ipfshttpclient.connect()
+                print("Connexion IPFS réussie sans paramètres")
     
     async def upload_to_ipfs(self, content: Union[str, bytes], content_type: str = "text") -> str:
         """Upload du contenu sur IPFS et retourne l'URL"""

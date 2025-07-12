@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str
     
-    # IPFS
-    IPFS_API_URL: str = "http://localhost:5001"
+    # IPFS - Format MultiAddr correct
+    IPFS_API_URL: str = "/ip4/127.0.0.1/tcp/5001/http"
     IPFS_GATEWAY_URL: str = "http://localhost:8080"
     
     # Blockchain
