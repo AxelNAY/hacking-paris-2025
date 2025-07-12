@@ -15,15 +15,15 @@ async def authenticate_wallet(
     wallet_data: WalletSignature,
     db: Session = Depends(get_db)
 ):
-    """Authentification par signature de wallet"""
-    # Vérifier la signature (à implémenter selon votre méthode)
+    """Wallet signature authentication"""
+    # Verify signature (to be implemented according to your method)
     if not verify_wallet_signature(wallet_data.message, wallet_data.signature, wallet_data.wallet_address):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Signature invalide"
+            detail="Invalid signature"
         )
     
-    # Chercher ou créer l'utilisateur
+    # Find or create user
     user = db.query(User).filter(User.wallet_address == wallet_data.wallet_address).first()
     if not user:
         user = User(wallet_address=wallet_data.wallet_address)
@@ -31,7 +31,7 @@ async def authenticate_wallet(
         db.commit()
         db.refresh(user)
     
-    # Créer le token JWT
+    # Create JWT token
     access_token = create_access_token(data={"sub": str(user.id)})
     
     return AuthResponse(
@@ -43,7 +43,7 @@ async def authenticate_wallet(
 async def get_current_user_profile(
     current_user: User = Depends(get_current_user)
 ):
-    """Récupérer le profil de l'utilisateur connecté"""
+    """Get current user profile"""
     return UserResponse.from_orm(current_user)
 
 @router.put("/me", response_model=UserResponse)
@@ -52,7 +52,7 @@ async def update_profile(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Mettre à jour le profil utilisateur"""
+    """Update user profile"""
     for field, value in user_update.dict(exclude_unset=True).items():
         setattr(current_user, field, value)
     
@@ -67,11 +67,11 @@ async def get_user_by_id(
     user_id: int,
     db: Session = Depends(get_db)
 ):
-    """Récupérer un utilisateur par son ID"""
+    """Get user by ID"""
     user = db.query(User).filter(User.id == user_id, User.deleted_at.is_(None)).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Utilisateur non trouvé"
+            detail="User not found"
         )
     return UserResponse.from_orm(user)

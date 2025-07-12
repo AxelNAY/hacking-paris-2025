@@ -5,14 +5,14 @@ from app.api.routes import users, content, vote, nft, leaderboard
 
 app = FastAPI(
     title="Fan Platform API",
-    description="API pour plateforme de fans avec IA et NFT",
+    description="API for fan platform with AI and NFT",
     version="1.0.0"
 )
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # À ajuster en production
+    allow_origins=["*"],  # Adjust in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

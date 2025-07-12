@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script simple pour créer la base de données
+Simple script to create the database
 Usage: python create_db.py
 """
 
@@ -9,24 +9,24 @@ from app.db.session import engine
 from app.core.config import settings
 
 def create_database():
-    """Créer toutes les tables de la base de données"""
-    print("🔄 Création de la base de données PostgreSQL...")
+    """Create all database tables"""
+    print("🔄 Creating PostgreSQL database...")
     print(f"📍 URL: {settings.DATABASE_URL}")
     
     try:
-        # Créer toutes les tables définies dans models.py
+        # Create all tables defined in models.py
         Base.metadata.create_all(bind=engine)
         
-        print("✅ Base de données créée avec succès!")
-        print("📋 Tables créées:")
+        print("✅ Database created successfully!")
+        print("📋 Tables created:")
         print("   - user")
         print("   - content") 
         print("   - vote")
         print("   - badge_nft")
         
     except Exception as e:
-        print(f"❌ Erreur lors de la création: {e}")
-        print("💡 Vérifiez que PostgreSQL est démarré et que la base existe")
+        print(f"❌ Error during creation: {e}")
+        print("💡 Check that PostgreSQL is started and the database exists")
         raise
 
 if __name__ == "__main__":

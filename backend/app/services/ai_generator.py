@@ -6,16 +6,16 @@ from app.db.schemas import ContentType, ContentDescription
 openai.api_key = settings.OPENAI_API_KEY
 
 async def generate_content(prompt: str, content_type: ContentType, description: ContentDescription) -> Union[str, bytes]:
-    """Génère du contenu avec l'IA selon le type et la description"""
+    """Generate content with AI according to type and description"""
     
-    # Prompts spécialisés selon la description
+    # Specialized prompts according to description
     specialized_prompts = {
-        ContentDescription.logo: f"Créer un logo moderne et professionnel pour: {prompt}",
-        ContentDescription.slogan: f"Créer un slogan accrocheur et mémorable pour: {prompt}",
-        ContentDescription.tiffo: f"Créer un design de tifo (bannière de supporters) pour: {prompt}",
-        ContentDescription.vetement: f"Créer un design de vêtement/textile pour: {prompt}",
-        ContentDescription.lyrics: f"Écrire des paroles inspirantes et rythmées pour: {prompt}",
-        ContentDescription.musique: f"Créer une mélodie ou composition musicale pour: {prompt}",
+        ContentDescription.logo: f"Create a modern and professional logo for: {prompt}",
+        ContentDescription.slogan: f"Create a catchy and memorable slogan for: {prompt}",
+        ContentDescription.tiffo: f"Create a tifo design (supporters banner) for: {prompt}",
+        ContentDescription.vetement: f"Create a clothing/textile design for: {prompt}",
+        ContentDescription.lyrics: f"Write inspiring and rhythmic lyrics for: {prompt}",
+        ContentDescription.musique: f"Create a melody or musical composition for: {prompt}",
     }
     
     enhanced_prompt = specialized_prompts.get(description, prompt)
@@ -28,13 +28,13 @@ async def generate_content(prompt: str, content_type: ContentType, description: 
         elif content_type == ContentType.audio:
             return await generate_audio(enhanced_prompt)
         else:
-            raise ValueError(f"Type de contenu non supporté: {content_type}")
+            raise ValueError(f"Unsupported content type: {content_type}")
             
     except Exception as e:
-        raise Exception(f"Erreur lors de la génération IA: {str(e)}")
+        raise Exception(f"Error during AI generation: {str(e)}")
 
 async def generate_image(prompt: str) -> str:
-    """Génère une image avec DALL-E"""
+    """Generate an image with DALL-E"""
     try:
         response = openai.Image.create(
             prompt=prompt,
@@ -44,15 +44,15 @@ async def generate_image(prompt: str) -> str:
         )
         return response['data'][0]['url']
     except Exception as e:
-        raise Exception(f"Erreur DALL-E: {str(e)}")
+        raise Exception(f"DALL-E error: {str(e)}")
 
 async def generate_text(prompt: str) -> str:
-    """Génère du texte avec GPT"""
+    """Generate text with GPT"""
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "Tu es un créateur de contenu créatif et inspirant."},
+                {"role": "system", "content": "You are a creative and inspiring content creator."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=500,
@@ -60,14 +60,14 @@ async def generate_text(prompt: str) -> str:
         )
         return response.choices[0].message.content
     except Exception as e:
-        raise Exception(f"Erreur GPT: {str(e)}")
+        raise Exception(f"GPT error: {str(e)}")
 
 async def generate_audio(prompt: str) -> str:
-    """Génère de l'audio (placeholder - à adapter selon votre service audio)"""
-    # Ici vous pourriez utiliser des services comme:
-    # - ElevenLabs pour la synthèse vocale
-    # - Mubert pour la génération musicale
-    # - Ou d'autres APIs audio
+    """Generate audio (placeholder - adapt according to your audio service)"""
+    # Here you could use services like:
+    # - ElevenLabs for speech synthesis
+    # - Mubert for musical generation
+    # - Or other audio APIs
     
-    # Pour l'instant, on retourne un placeholder
-    return f"Audio généré pour: {prompt}"
+    # For now, we return a placeholder
+    return f"Audio generated for: {prompt}"

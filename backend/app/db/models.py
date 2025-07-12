@@ -32,7 +32,7 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
     deleted_at = Column(DateTime, nullable=True)
     
-    # Relations
+    # Relationships
     contents = relationship("Content", back_populates="user")
     votes = relationship("Vote", back_populates="voter")
     badges = relationship("BadgeNFT", back_populates="user")
@@ -51,7 +51,7 @@ class Content(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
     deleted_at = Column(DateTime, nullable=True)
     
-    # Relations
+    # Relationships
     user = relationship("User", back_populates="contents")
     vote_records = relationship("Vote", back_populates="content")
 
@@ -61,10 +61,10 @@ class Vote(Base):
     id = Column(Integer, primary_key=True)
     voter_id = Column(Integer, ForeignKey("user.id"))
     content_id = Column(Integer, ForeignKey("content.id"))
-    amount = Column(Float)  # en $FAN token
+    amount = Column(Float)  # in $FAN token
     tx_hash = Column(String)
     
-    # Relations
+    # Relationships
     voter = relationship("User", back_populates="votes")
     content = relationship("Content", back_populates="vote_records")
 
@@ -76,5 +76,5 @@ class BadgeNFT(Base):
     nft_token_id = Column(String)
     metadata_ipfs = Column(String)
     
-    # Relations
+    # Relationships
     user = relationship("User", back_populates="badges")
