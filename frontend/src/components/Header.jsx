@@ -1,5 +1,5 @@
 import React from "react";
-import Button from "./ui/button";
+import { Button }from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "./ui/select";
 import { Badge } from "./ui/badge";
 import { Wallet, Snowflake, ChevronDown } from "lucide-react";

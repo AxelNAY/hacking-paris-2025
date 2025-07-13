@@ -1,5 +1,5 @@
 import React from "react";
-import Button from "./ui/button";
+import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import {
   Sparkles, Vote, Trophy, ArrowRight, Wand2, Image, Type,
