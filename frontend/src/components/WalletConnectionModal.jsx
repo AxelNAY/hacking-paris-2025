@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import { Wallet, Shield, Zap, Gift } from "lucide-react";
+import { Wallet, Shield, Zap, Gift, AlertCircle, CheckCircle } from "lucide-react";
 
 export function WalletConnectionModal({
   open,
@@ -16,9 +16,93 @@ export function WalletConnectionModal({
   title = "Connect Your Wallet",
   description = "Connect your wallet to unlock all ChillFan features and start earning rewards.",
 }) {
-  const handleConnect = () => {
-    onConnect();
-    onOpenChange(false);
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState(null);
+
+  const detectMetaMask = () => {
+    return typeof window !== "undefined" && window.ethereum && window.ethereum.isMetaMask;
+  };
+
+  const handleMetaMaskConnect = async () => {
+    if (!detectMetaMask()) {
+      setError("MetaMask is not installed. Please install MetaMask extension.");
+      return;
+    }
+
+    setConnecting(true);
+    setError(null);
+
+    try {
+      // Demander l'autorisation de se connecter
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
+      });
+
+      if (accounts.length > 0) {
+        const address = accounts[0];
+        
+        // Vérifier qu'on est sur le bon réseau (Chiliz Chain)
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        const chilizChainId = '0x15B32'; // 88882 en hexadécimal (Chiliz Chain)
+        
+        if (chainId !== chilizChainId) {
+          try {
+            // Essayer de changer vers Chiliz Chain
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: chilizChainId }],
+            });
+          } catch (switchError) {
+            // Si le réseau n'existe pas, l'ajouter
+            if (switchError.code === 4902) {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: chilizChainId,
+                  chainName: 'Chiliz Chain',
+                  nativeCurrency: {
+                    name: 'CHZ',
+                    symbol: 'CHZ',
+                    decimals: 18
+                  },
+                  rpcUrls: ['https://rpc.chiliz.com'],
+                  blockExplorerUrls: ['https://scan.chiliz.com']
+                }]
+              });
+            } else {
+              throw switchError;
+            }
+          }
+        }
+
+        // Appeler la fonction de connexion du parent
+        onConnect(address);
+        onOpenChange(false);
+        
+        // Écouter les changements de compte
+        window.ethereum.on('accountsChanged', (accounts) => {
+          if (accounts.length === 0) {
+            // L'utilisateur a déconnecté son wallet
+            onConnect(null);
+          } else {
+            // L'utilisateur a changé de compte
+            onConnect(accounts[0]);
+          }
+        });
+
+        // Écouter les changements de réseau
+        window.ethereum.on('chainChanged', (chainId) => {
+          // Recharger la page si le réseau change
+          window.location.reload();
+        });
+
+      }
+    } catch (err) {
+      console.error('Erreur de connexion MetaMask:', err);
+      setError(err.message || "Failed to connect to MetaMask");
+    } finally {
+      setConnecting(false);
+    }
   };
 
   const benefits = [
@@ -78,14 +162,54 @@ export function WalletConnectionModal({
           ))}
         </div>
 
+        {error && (
+          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
+            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
         <div className="space-y-3">
-          <Button
-            onClick={handleConnect}
-            className="w-full bg-chiliz-red hover:bg-chiliz-red-hover text-white py-3 shadow-lg hover:shadow-xl transition-all"
-          >
-            <Wallet className="w-4 h-4 mr-2" />
-            Connect Wallet
-          </Button>
+          {detectMetaMask() ? (
+            <Button
+              onClick={handleMetaMaskConnect}
+              disabled={connecting}
+              className="w-full bg-chiliz-red hover:bg-chiliz-red-hover text-white py-3 shadow-lg hover:shadow-xl transition-all"
+            >
+              {connecting ? (
+                <>
+                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <img 
+                    src="https://cdn.iconscout.com/icon/free/png-256/metamask-2728406-2261817.png" 
+                    alt="MetaMask" 
+                    className="w-4 h-4 mr-2"
+                  />
+                  Connect with MetaMask
+                </>
+              )}
+            </Button>
+          ) : (
+            <div className="space-y-2">
+              <Button
+                onClick={() => window.open('https://metamask.io/download/', '_blank')}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 shadow-lg hover:shadow-xl transition-all"
+              >
+                <img 
+                  src="https://cdn.iconscout.com/icon/free/png-256/metamask-2728406-2261817.png" 
+                  alt="MetaMask" 
+                  className="w-4 h-4 mr-2"
+                />
+                Install MetaMask
+              </Button>
+              <p className="text-xs text-chiliz-gray-500 text-center">
+                MetaMask extension is required to connect your wallet
+              </p>
+            </div>
+          )}
 
           <Button
             variant="outline"
@@ -96,9 +220,20 @@ export function WalletConnectionModal({
           </Button>
         </div>
 
-        <p className="text-xs text-chiliz-gray-500 text-center mt-4">
-          No fees to connect • Instant setup • Powered by Chiliz
-        </p>
+        <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-chiliz-gray-200">
+          <div className="flex items-center gap-1 text-xs text-chiliz-gray-500">
+            <CheckCircle className="w-3 h-3" />
+            <span>No fees to connect</span>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-chiliz-gray-500">
+            <CheckCircle className="w-3 h-3" />
+            <span>Instant setup</span>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-chiliz-gray-500">
+            <CheckCircle className="w-3 h-3" />
+            <span>Powered by Chiliz</span>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

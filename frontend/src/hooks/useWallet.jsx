@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 
-// Exemple d'URL backend, adapte à la tienne
-const API_BASE = "https://localhost:8000/";
+// Backend base URL (HTTP, not HTTPS)
+const API_BASE = "http://localhost:8000"; 
 
 export function useWallet() {
   const [walletAddress, setWalletAddress] = useState(null);
@@ -10,37 +10,47 @@ export function useWallet() {
   const [teamBalances, setTeamBalances] = useState({});
   const [chzBalance, setChzBalance] = useState(0);
 
-  // Connexion wallet + appel backend pour récupérer les données utilisateur
   const connectWallet = useCallback(async () => {
     try {
       if (!window.ethereum) {
         alert("Please install MetaMask");
         return;
       }
+
+      // Request wallet connection
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      console.log(accounts);
       const address = accounts[0];
       setWalletAddress(address);
+      console.log("Hello");
 
-      // Appel backend pour login/auth avec wallet
-      const resLogin = await fetch(`${API_BASE}/api/v1/auth/login`, {
+      // 🔐 Login via backend
+      const resLogin = await fetch(`${API_BASE}/api/auth/wallet`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ walletAddress: address }),
       });
+      console.log("World");
 
-      if (!resLogin.ok) throw new Error("Login failed");
+      if (!resLogin.ok) {
+        const errText = await resLogin.text();
+        throw new Error(`Login failed: ${errText}`);
+      }
 
-      // Récupérer balances depuis backend
+      // 📊 Fetch balances
       const resBalances = await fetch(`${API_BASE}/users/${address}/balances`);
-      if (!resBalances.ok) throw new Error("Failed to get balances");
-      const data = await resBalances.json();
+      if (!resBalances.ok) {
+        const errText = await resBalances.text();
+        throw new Error(`Failed to fetch balances: ${errText}`);
+      }
 
+      const data = await resBalances.json();
       setTeamBalances(data.teamBalances || {});
       setChzBalance(data.chzBalance || 0);
       setIsWalletConnected(true);
     } catch (err) {
-      console.error(err);
-      alert("Wallet connection failed");
+      console.error("Wallet connection failed:", err);
+      alert("Wallet connection failed: " + err.message);
       setIsWalletConnected(false);
       setWalletAddress(null);
       setTeamBalances({});
@@ -48,7 +58,6 @@ export function useWallet() {
     }
   }, []);
 
-  // Déconnexion simple
   const disconnectWallet = useCallback(() => {
     setWalletAddress(null);
     setIsWalletConnected(false);
@@ -56,16 +65,13 @@ export function useWallet() {
     setChzBalance(0);
   }, []);
 
-  // Gérer changement de compte MetaMask
   useEffect(() => {
     if (!window.ethereum) return;
 
     const handleAccountsChanged = (accounts) => {
       if (accounts.length === 0) {
-        // Déconnexion si aucun compte
         disconnectWallet();
       } else {
-        // Se reconnecter avec nouveau compte
         connectWallet();
       }
     };

@@ -1,23 +1,117 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import {
   Sparkles, Vote, Trophy, ArrowRight, Wand2, Image, Type,
-  Flag, Shirt, Mic2, Music, Wallet, Shield, Zap
+  Flag, Shirt, Mic2, Music, Wallet, Shield, Zap, AlertCircle
 } from "lucide-react";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { WalletConnectionModal } from "./WalletConnectionModal";
 
 export function HomePage({
   onNavigate,
-  isWalletConnected,
-  onConnectWallet,
   onSubmitContent,
-  onOpenWalletModal
 }) {
-  const handleGeneralWalletConnection = () => {
-    if (!isWalletConnected) {
-      onOpenWalletModal();
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState(null);
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    title: "Connect Your Wallet",
+    description: "Connect your wallet to unlock all ChillFan features and start earning rewards."
+  });
+  const [balances, setBalances] = useState({
+    CHZ: 0,
+    PSG: 0,
+    BAR: 0,
+    JUV: 0,
+    CITY: 0,
+    REAL: 0,
+    AFC: 0,
+    ATM: 0
+  });
+
+  // Vérifier si MetaMask est connecté au chargement
+  useEffect(() => {
+    checkIfWalletIsConnected();
+  }, []);
+
+  const checkIfWalletIsConnected = async () => {
+    try {
+      if (window.ethereum) {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        
+        if (accounts.length > 0) {
+          setIsWalletConnected(true);
+          setWalletAddress(accounts[0]);
+          await loadBalances(accounts[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la vérification de la connexion:', error);
     }
+  };
+
+  const loadBalances = async (address) => {
+    try {
+      // Simulation des balances - remplace par des appels réels aux contrats
+      const mockBalances = {
+        CHZ: Math.floor(Math.random() * 1000) + 100,
+        PSG: Math.floor(Math.random() * 50) + 10,
+        BAR: Math.floor(Math.random() * 50) + 10,
+        JUV: Math.floor(Math.random() * 50) + 10,
+        CITY: Math.floor(Math.random() * 50) + 10,
+        REAL: Math.floor(Math.random() * 50) + 10,
+        AFC: Math.floor(Math.random() * 50) + 10,
+        ATM: Math.floor(Math.random() * 50) + 10
+      };
+      
+      setBalances(mockBalances);
+    } catch (error) {
+      console.error('Erreur lors du chargement des balances:', error);
+    }
+  };
+
+  const handleWalletConnect = async (address) => {
+    if (address) {
+      setIsWalletConnected(true);
+      setWalletAddress(address);
+      await loadBalances(address);
+    } else {
+      setIsWalletConnected(false);
+      setWalletAddress(null);
+      setBalances({
+        CHZ: 0,
+        PSG: 0,
+        BAR: 0,
+        JUV: 0,
+        CITY: 0,
+        REAL: 0,
+        AFC: 0,
+        ATM: 0
+      });
+    }
+  };
+
+  const handleOpenWalletModal = (config = {}) => {
+    setModalConfig({
+      title: config.title || "Connect Your Wallet",
+      description: config.description || "Connect your wallet to unlock all ChillFan features and start earning rewards."
+    });
+    setWalletModalOpen(true);
+  };
+
+  const handleDisconnectWallet = () => {
+    setIsWalletConnected(false);
+    setWalletAddress(null);
+    setBalances({
+      CHZ: 0,
+      PSG: 0,
+      BAR: 0,
+      JUV: 0,
+      CITY: 0,
+      REAL: 0,
+      AFC: 0,
+      ATM: 0
+    });
   };
 
   const steps = [
@@ -95,6 +189,23 @@ export function HomePage({
               Generate or upload unique content for your favorite club across 6 categories.
             </p>
 
+            {/* Wallet Status */}
+            {isWalletConnected && (
+              <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg inline-block">
+                <div className="flex items-center gap-2 text-green-700">
+                  <Wallet className="w-5 h-5" />
+                  <span className="font-medium">
+                    Connected: {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                  </span>
+                </div>
+                <div className="flex gap-4 mt-2 text-sm">
+                  <span>$CHZ: {balances.CHZ}</span>
+                  <span>$PSG: {balances.PSG}</span>
+                  <span>$BAR: {balances.BAR}</span>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 onClick={onSubmitContent}
@@ -117,7 +228,7 @@ export function HomePage({
                 </Button>
               ) : (
                 <Button 
-                  onClick={handleGeneralWalletConnection}
+                  onClick={handleOpenWalletModal}
                   variant="outline" 
                   size="lg"
                   className="px-8 py-3 border-chiliz-red text-chiliz-red hover:bg-chiliz-red hover:text-white transition-all"
@@ -181,7 +292,7 @@ export function HomePage({
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button 
-                      onClick={() => onOpenWalletModal({
+                      onClick={() => handleOpenWalletModal({
                         title: "Ready to Start Creating?",
                         description: "Connect your wallet to unlock content creation and start earning $CHZ tokens for your creativity."
                       })}
@@ -277,7 +388,7 @@ export function HomePage({
                     Join thousands of fans already earning rewards. Connect your wallet now!
                   </p>
                   <Button
-                    onClick={() => onOpenWalletModal({
+                    onClick={() => handleOpenWalletModal({
                       title: "Start Your Creative Journey",
                       description: "Join thousands of fans already earning rewards. Connect your wallet now!"
                     })}
@@ -293,6 +404,15 @@ export function HomePage({
           )}
         </div>
       </section>
+
+      {/* Wallet Connection Modal */}
+      <WalletConnectionModal
+        open={walletModalOpen}
+        onOpenChange={setWalletModalOpen}
+        onConnect={handleWalletConnect}
+        title={modalConfig.title}
+        description={modalConfig.description}
+      />
     </div>
   );
 }

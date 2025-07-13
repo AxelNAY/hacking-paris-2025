@@ -75,3 +75,20 @@ async def get_user_by_id(
             detail="User not found"
         )
     return UserResponse.from_orm(user)
+
+@router.get("/{wallet_address}/balances")
+async def get_user_balances(wallet_address: str, db: Session = Depends(get_db)):
+    """Return user balances (CHZ + team tokens)"""
+    user = db.query(User).filter(User.wallet_address == wallet_address).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Mock data here – replace with actual balance fetching logic
+    return {
+        "chzBalance": 1000.5,
+        "teamBalances": {
+            "psg": 150,
+            "juve": 80,
+            "barca": 300
+        }
+    }
