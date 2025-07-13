@@ -24,11 +24,29 @@ export function useWallet() {
       setWalletAddress(address);
       console.log("Hello");
 
-      // 🔐 Login via backend
-      const resLogin = await fetch(`${API_BASE}/api/auth/wallet`, {
+      // Generate signature for authentication
+      const message = "Sign this message to authenticate";
+      let signature;
+      
+      try {
+        signature = await window.ethereum.request({
+          method: "personal_sign",
+          params: [message, address],
+        });
+      } catch (signError) {
+        console.error("Signature failed:", signError);
+        throw new Error("User rejected signature request");
+      }
+
+      // 🔐 Login via backend - CORRECT URL for Solution 1
+      const resLogin = await fetch(`${API_BASE}/api/v1/users/auth/wallet`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: address }),
+        body: JSON.stringify({ 
+          wallet_address: address,
+          message: message,
+          signature: signature
+        }),
       });
       console.log("World");
 
@@ -37,8 +55,17 @@ export function useWallet() {
         throw new Error(`Login failed: ${errText}`);
       }
 
-      // 📊 Fetch balances
-      const resBalances = await fetch(`${API_BASE}/users/${address}/balances`);
+      const loginData = await resLogin.json();
+      console.log("Login successful:", loginData);
+
+      // Store the access token if needed
+      if (loginData.access_token) {
+        localStorage.setItem('access_token', loginData.access_token);
+        console.log(access_token);
+      }
+
+      // 📊 Fetch balances - CORRECT URL for Solution 1
+      const resBalances = await fetch(`${API_BASE}/api/v1/users/${address}/balances`);
       if (!resBalances.ok) {
         const errText = await resBalances.text();
         throw new Error(`Failed to fetch balances: ${errText}`);
@@ -63,6 +90,7 @@ export function useWallet() {
     setIsWalletConnected(false);
     setTeamBalances({});
     setChzBalance(0);
+    localStorage.removeItem('access_token');
   }, []);
 
   useEffect(() => {
