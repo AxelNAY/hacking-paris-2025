@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "./ui/button";
+import Button from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "./ui/select";
 import { Badge } from "./ui/badge";
 import { Wallet, Snowflake, ChevronDown } from "lucide-react";
@@ -97,13 +97,14 @@ export function Header({
             </div>
           )}
           
-          <Button 
+          <Button
             onClick={onConnectWallet}
             variant={isWalletConnected ? "outline" : "default"}
             size="sm"
-            className={isWalletConnected 
-              ? "border-chiliz-gray-300 text-chiliz-gray-700 hover:bg-chiliz-gray-50 hover:border-chiliz-red hover:text-chiliz-red" 
-              : "bg-chiliz-red hover:bg-chiliz-red-hover text-white shadow-md hover:shadow-lg transition-all"
+            className={
+              isWalletConnected
+                ? "border-chiliz-gray-300 text-chiliz-gray-700 hover:bg-chiliz-gray-50 hover:border-chiliz-red hover:text-chiliz-red"
+                : "bg-chiliz-red hover:bg-chiliz-red-hover text-white shadow-md hover:shadow-lg transition-all"
             }
           >
             <Wallet className="w-4 h-4 mr-2" />
